@@ -11,32 +11,45 @@ jobs:
   get-stream-url:
     runs-on: ubuntu-latest
     steps:
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
       - name: Get Stream URL
         id: extract_url
         run: |
-          # Daftar instance Piped alternatif
+          # Daftar instance Piped alternatif (prioritaskan yang stabil)
           INSTANCES=(
-            "https://piped.kavin.rocks"
             "https://piped.video"
-            "https://piped.tokhmi.xyz"
+            "https://piped.tokhmi.xyz" 
+            "https://piped.kavin.rocks"
           )
-          
+
           for instance in "${INSTANCES[@]}"; do
             echo "Mencoba instance: $instance"
-            URL=$(curl -s "$instance/streams/${{ inputs.video_id }}" | jq -r '.videoStreams[0].url? // empty')
             
-            if [ -n "$URL" ]; then
-              echo "::set-output name=stream_url::${URL}"
-              echo "Berhasil! Link: ${URL}"
-              break
+            # Tambahkan timeout dan header untuk request
+            RESPONSE=$(curl -s -m 10 -H "Accept: application/json" "$instance/streams/${{ inputs.video_id }}")
+            
+            # Validasi response JSON sebelum parsing
+            if jq -e . >/dev/null 2>&1 <<<"$RESPONSE"; then
+              URL=$(jq -r '.videoStreams[0].url? // empty' <<< "$RESPONSE")
+              
+              if [ -n "$URL" ]; then
+                echo "::set-output name=stream_url::${URL}"
+                echo "Berhasil! Link: ${URL}"
+                exit 0  # Keluar jika sukses
+              fi
+            else
+              echo "Response tidak valid dari $instance"
             fi
           done
 
-          if [ -z "$URL" ]; then
-            echo "::error::Semua instance gagal"
-            exit 1
-          fi
+          echo "::error::Semua instance gagal"
+          exit 1
 
       - name: Show Result
+        if: success()
         run: |
           echo "Link streaming: ${{ steps.extract_url.outputs.stream_url }}"
+          echo "Format command download:"
+          echo "curl -o video.mp4 '${{ steps.extract_url.outputs.stream_url }}'"

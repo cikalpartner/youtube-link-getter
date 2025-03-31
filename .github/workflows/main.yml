@@ -1,0 +1,13 @@
+name: Get YouTube Link
+on: [workflow_dispatch]  # Bisa dijalankan manual
+
+jobs:
+  get-link:
+    runs-on: ubuntu-latest  # Pakai server Linux gratis dari GitHub
+    steps:
+      - name: Install yt-dlp
+        run: pip install yt-dlp  # Pasang tool untuk ambil link YouTube
+
+      - name: Get Stream URL
+        run: |
+          yt-dlp -g "https://youtu.be/OIlWZhB3Ag0" --verbose  # Ganti VIDEO_ID dengan ID video

@@ -1,13 +1,21 @@
-name: Get YouTube Link
-on: [workflow_dispatch]  # Bisa dijalankan manual
+name: Simple YouTube Link Extractor
+on: [workflow_dispatch]
 
 jobs:
   get-link:
-    runs-on: ubuntu-latest  # Pakai server Linux gratis dari GitHub
+    runs-on: ubuntu-latest
     steps:
-      - name: Install yt-dlp
-        run: pip install yt-dlp  # Pasang tool untuk ambil link YouTube
-
-      - name: Get Stream URL
+      - uses: actions/checkout@v4
+      
+      - name: Setup yt-dlp
         run: |
-          yt-dlp -g "https://youtu.be/OIlWZhB3Ag0" --verbose  # Ganti VIDEO_ID dengan ID video
+          pip install yt-dlp
+          yt-dlp --version
+
+      - name: Extract URL
+        run: |
+          yt-dlp \
+            --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+            --referer "https://youtube.com" \
+            --no-check-certificate \
+            -g "https://youtu.be/OIlWZhB3Ag0"

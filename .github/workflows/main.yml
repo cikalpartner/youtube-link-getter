@@ -1,19 +1,32 @@
-name: Get YouTube Stream Link via Piped
-on: 
-  workflow_dispatch:
-    inputs:
-      video_id:
-        description: 'YouTube Video ID'
-        required: true
-        default: 'OIlWZhB3Ag0'
+name: Get YouTube Stream Link
+on: [workflow_dispatch]
 
 jobs:
   get-link:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Stream URL
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
         run: |
-          VIDEO_ID="${{ inputs.video_id }}"
-          STREAM_URL=$(curl -s "https://piped.kavin.rocks/streams/${VIDEO_ID}" | jq -r '.videoStreams[0].url')
-          echo "::set-output name=stream_url::${STREAM_URL}"
-          echo "Stream URL: ${STREAM_URL}"
+          python -m pip install --upgrade pip
+          pip install yt-dlp
+          sudo apt-get install -y jq
+
+      - name: Upload Cookies (Manual Step)
+        run: |
+          echo "PASTE_YOUR_COOKIES_HERE" > cookies.txt
+          # Cara dapat cookies:
+          # 1. Install ekstensi 'Get cookies.txt' di Chrome
+          # 2. Login YouTube di browser
+          # 3. Export cookies dan paste isinya di atas
+
+      - name: Get Stream URL with Cookies
+        run: |
+          yt-dlp --cookies cookies.txt -g "https://youtu.be/${{ inputs.video_id || 'OIlWZhB3Ag0' }}" | head -n 1

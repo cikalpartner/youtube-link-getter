@@ -1,21 +1,19 @@
-name: Simple YouTube Link Extractor
-on: [workflow_dispatch]
+name: Get YouTube Stream Link via Piped
+on: 
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: 'YouTube Video ID'
+        required: true
+        default: 'OIlWZhB3Ag0'
 
 jobs:
   get-link:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup yt-dlp
+      - name: Get Stream URL
         run: |
-          pip install yt-dlp
-          yt-dlp --version
-
-      - name: Extract URL
-        run: |
-          yt-dlp \
-            --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
-            --referer "https://youtube.com" \
-            --no-check-certificate \
-            -g "https://youtu.be/OIlWZhB3Ag0"
+          VIDEO_ID="${{ inputs.video_id }}"
+          STREAM_URL=$(curl -s "https://piped.kavin.rocks/streams/${VIDEO_ID}" | jq -r '.videoStreams[0].url')
+          echo "::set-output name=stream_url::${STREAM_URL}"
+          echo "Stream URL: ${STREAM_URL}"
